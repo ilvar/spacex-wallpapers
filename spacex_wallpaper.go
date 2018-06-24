@@ -1,11 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"regexp"
 	"time"
+	"os"
 	"os/exec"
+	"os/user"
+	"path"
 	"math/rand"
 	"io/ioutil"
 	"net/http"
@@ -60,19 +62,21 @@ func main() {
 	orig_url := re2.FindSubmatch(body)
 
 	file_url := string(orig_url[1])
-	file_path := "spacex_" + string(orig_url[len(orig_url) - 1])
+	file_name := "spacex_" + string(orig_url[len(orig_url) - 1])
 
-	fmt.Printf("%s\n", file_url)
-	fmt.Printf("%s\n", file_path)
+	usr, _ := user.Current()
+	dirpath := path.Join(usr.HomeDir, ".spacex_wallpapers")
+	fullpath := path.Join(dirpath, file_name)
+	os.MkdirAll(dirpath, os.FileMode(0755))
 
-	err = exec.Command("wget", "-O", "/tmp/" + file_path, file_url).Run()
+	err = exec.Command("wget", "-O", fullpath, file_url).Run()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 
 
-	err = exec.Command("gsettings", "set", "org.gnome.desktop.background", "picture-uri", "file:///tmp/" + file_path).Run()
+	err = exec.Command("gsettings", "set", "org.gnome.desktop.background", "picture-uri", "file://" + fullpath).Run()
 	if err != nil {
 		log.Fatal(err)
 	}
